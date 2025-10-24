@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multiplayer Games</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Game Result Modal -->
+  <div id="resultModal" class="modal">
+    <div class="modal-content">
+      <h2 id="resultTitle"></h2>
+      <p id="resultMessage"></p>
+      <div class="modal-buttons">
+        <button id="rematchBtn" class="btn btn-primary">Rematch</button>
+        <button id="exitBtn" class="btn btn-secondary">Exit to Menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Toast -->
+  <div id="errorToast" class="toast"></div>
+
+  <!-- Main Container -->
+  <div id="app">
+    <!-- Home Screen -->
+    <div id="homeScreen" class="screen active">
+      <div class="container">
+        <h1 class="title">🎮 Multiplayer Games</h1>
+        <p class="subtitle">Choose your game and challenge a friend!</p>
+
+        <div class="name-input-section">
+          <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="20" />
+        </div>
+
+        <div class="games-grid">
+          <div class="game-card" data-game="rps">
+            <div class="game-icon">✊✋✌️</div>
+            <h3>Rock Paper Scissors</h3>
+            <p>Classic hand game</p>
+          </div>
+
+          <div class="game-card" data-game="tictactoe">
+            <div class="game-icon">⭕❌</div>
+            <h3>Tic Tac Toe</h3>
+            <p>Three in a row wins</p>
+          </div>
+
+          <div class="game-card" data-game="connect4">
+            <div class="game-icon">🔴🟡</div>
+            <h3>Connect 4</h3>
+            <p>Four in a row wins</p>
+          </div>
+
+          <div class="game-card" data-game="checkers">
+            <div class="game-icon">⚫🔴</div>
+            <h3>Checkers</h3>
+            <p>Classic board game</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lobby Selection Screen -->
+    <div id="lobbySelectionScreen" class="screen">
+      <div class="container">
+        <button class="back-btn" id="backToHome">← Back</button>
+
+        <h2 class="screen-title" id="gameTitle"></h2>
+
+        <div class="lobby-options">
+          <button class="btn btn-primary btn-large" id="createPublicLobby">
+            🌐 Create Public Lobby
+          </button>
+
+          <button class="btn btn-secondary btn-large" id="createPrivateLobby">
+            🔒 Create Private Lobby
+          </button>
+        </div>
+
+        <div class="public-lobbies-section">
+          <h3>Available Public Lobbies</h3>
+          <div id="publicLobbiesList" class="lobbies-list">
+            <p class="empty-message">No public lobbies available. Create one!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Waiting Room Screen -->
+    <div id="waitingRoomScreen" class="screen">
+      <div class="container">
+        <button class="back-btn" id="leaveLobby">← Leave Lobby</button>
+
+        <h2 class="screen-title">Waiting Room</h2>
+
+        <div class="lobby-info">
+          <div class="info-item">
+            <span class="label">Lobby ID:</span>
+            <span id="lobbyIdDisplay" class="value"></span>
+            <button id="copyLobbyId" class="btn-icon" title="Copy Lobby ID">📋</button>
+          </div>
+          <div class="info-item">
+            <span class="label">Game:</span>
+            <span id="lobbyGameDisplay" class="value"></span>
+          </div>
+        </div>
+
+        <div class="players-list">
+          <div class="player-slot" id="player1Slot">
+            <div class="player-avatar">👤</div>
+            <div class="player-info">
+              <div class="player-name">Waiting...</div>
+              <div class="player-status">Not Ready</div>
+            </div>
+          </div>
+
+          <div class="vs-indicator">VS</div>
+
+          <div class="player-slot" id="player2Slot">
+            <div class="player-avatar">👤</div>
+            <div class="player-info">
+              <div class="player-name">Waiting...</div>
+              <div class="player-status">Not Ready</div>
+            </div>
+          </div>
+        </div>
+
+        <button id="readyBtn" class="btn btn-primary btn-large" disabled>
+          Ready Up!
+        </button>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+      <div class="container">
+        <div class="game-header">
+          <div class="player-indicator" id="playerIndicator">
+            <span id="turnIndicator">Your Turn</span>
+          </div>
+        </div>
+
+        <!-- Rock Paper Scissors Game -->
+        <div id="rpsGame" class="game-container" style="display: none;">
+          <h2>Choose Your Move</h2>
+          <div class="rps-choices">
+            <button class="rps-btn" data-choice="rock">
+              <span class="rps-icon">✊</span>
+              <span>Rock</span>
+            </button>
+            <button class="rps-btn" data-choice="paper">
+              <span class="rps-icon">✋</span>
+              <span>Paper</span>
+            </button>
+            <button class="rps-btn" data-choice="scissors">
+              <span class="rps-icon">✌️</span>
+              <span>Scissors</span>
+            </button>
+          </div>
+          <div id="rpsWaiting" class="waiting-message" style="display: none;">
+            Waiting for opponent...
+          </div>
+        </div>
+
+        <!-- Tic Tac Toe Game -->
+        <div id="tictactoeGame" class="game-container" style="display: none;">
+          <div class="board tictactoe-board" id="tictactoeBoard">
+            <!-- Generated by JS -->
+          </div>
+        </div>
+
+        <!-- Connect 4 Game -->
+        <div id="connect4Game" class="game-container" style="display: none;">
+          <div class="board connect4-board" id="connect4Board">
+            <!-- Generated by JS -->
+          </div>
+        </div>
+
+        <!-- Checkers Game -->
+        <div id="checkersGame" class="game-container" style="display: none;">
+          <div class="board checkers-board" id="checkersBoard">
+            <!-- Generated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/lobby.js"></script>
+  <script src="js/games/rps.js"></script>
+  <script src="js/games/tictactoe.js"></script>
+  <script src="js/games/connect4.js"></script>
+  <script src="js/games/checkers.js"></script>
+</body>
+</html>
