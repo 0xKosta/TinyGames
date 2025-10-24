@@ -252,6 +252,52 @@ body {
   margin-bottom: 40px;
 }
 
+/* Private Lobby Join Section */
+.private-lobby-join-section {
+  margin-top: 40px;
+  margin-bottom: 20px;
+}
+
+.private-lobby-join-section h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+}
+
+.join-private-form {
+  display: flex;
+  gap: 10px;
+  max-width: 600px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.join-private-form input {
+  flex: 1;
+  padding: 15px 20px;
+  font-size: 1rem;
+  border: 2px solid var(--bg-card);
+  border-radius: var(--border-radius);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+}
+
+.join-private-form input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.join-private-form input::placeholder {
+  color: var(--text-muted);
+}
+
+.join-private-form button {
+  white-space: nowrap;
+}
+
 /* Public Lobbies Section */
 .public-lobbies-section {
   margin-top: 40px;
@@ -659,6 +705,7 @@ body {
   font-size: 1.2rem;
   color: var(--text-secondary);
   margin-bottom: 30px;
+  white-space: pre-line;
 }
 
 .modal-buttons {
@@ -711,6 +758,14 @@ body {
 
   .game-card {
     padding: 20px;
+  }
+
+  .join-private-form {
+    flex-direction: column;
+  }
+
+  .join-private-form button {
+    width: 100%;
   }
 
   .players-list {
@@ -767,6 +822,7 @@ body {
 
   .modal-content p {
     font-size: 1rem;
+    white-space: pre-line;
   }
 
   .modal-buttons {
