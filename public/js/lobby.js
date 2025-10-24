@@ -1,29 +1,102 @@
 // Lobby Management
 
-// Handle lobby created
-AppState.socket.on('lobbyCreated', (lobby) => {
-  AppState.currentLobby = lobby;
-  showWaitingRoom(lobby);
-});
+// Setup lobby event listeners - called after socket is initialized
+function setupLobbyEventListeners() {
+  // Handle lobby created
+  AppState.socket.on('lobbyCreated', (lobby) => {
+    console.log('Lobby created:', lobby);
+    AppState.currentLobby = lobby;
+    showWaitingRoom(lobby);
+  });
 
-// Handle lobby update
-AppState.socket.on('lobbyUpdate', (lobby) => {
-  AppState.currentLobby = lobby;
-  updateWaitingRoom(lobby);
-});
+  // Handle lobby update
+  AppState.socket.on('lobbyUpdate', (lobby) => {
+    console.log('Lobby updated:', lobby);
+    AppState.currentLobby = lobby;
+    updateWaitingRoom(lobby);
+  });
 
-// Handle public lobbies update
-AppState.socket.on('publicLobbiesUpdate', (data) => {
-  if (data.gameType === AppState.currentGameType || data.gameType === 'all') {
-    updatePublicLobbiesList(data.lobbies);
-  }
-});
+  // Handle public lobbies update
+  AppState.socket.on('publicLobbiesUpdate', (data) => {
+    console.log('Public lobbies updated:', data);
+    if (data.gameType === AppState.currentGameType || data.gameType === 'all') {
+      updatePublicLobbiesList(data.lobbies);
+    }
+  });
 
-// Handle rematch
-AppState.socket.on('rematchInitiated', () => {
-  hideResultModal();
-  showScreen('waitingRoomScreen');
-});
+  // Handle rematch
+  AppState.socket.on('rematchInitiated', () => {
+    hideResultModal();
+    showScreen('waitingRoomScreen');
+  });
+
+  // Handle game start
+  AppState.socket.on('gameStart', (data) => {
+    console.log('Game starting:', data);
+    AppState.currentLobby = data.lobby;
+    const { gameState, players } = data;
+
+    // Initialize the appropriate game
+    showScreen('gameScreen');
+
+    // Hide all game containers
+    document.querySelectorAll('.game-container').forEach(container => {
+      container.style.display = 'none';
+    });
+
+    // Show and initialize the correct game
+    const gameType = AppState.currentLobby.gameType;
+
+    switch (gameType) {
+      case 'rps':
+        initRPSGame(gameState, players);
+        break;
+      case 'tictactoe':
+        initTicTacToeGame(gameState, players);
+        break;
+      case 'connect4':
+        initConnect4Game(gameState, players);
+        break;
+      case 'checkers':
+        initCheckersGame(gameState, players);
+        break;
+    }
+  });
+
+  // Handle game update
+  AppState.socket.on('gameUpdate', (data) => {
+    console.log('Game update:', data);
+    const { gameState, complete, winner, winnerName, draw, choices } = data;
+    const gameType = AppState.currentLobby.gameType;
+
+    // Update the game UI
+    switch (gameType) {
+      case 'rps':
+        updateRPSGame(gameState, choices);
+        break;
+      case 'tictactoe':
+        updateTicTacToeGame(gameState);
+        break;
+      case 'connect4':
+        updateConnect4Game(gameState);
+        break;
+      case 'checkers':
+        updateCheckersGame(gameState);
+        break;
+    }
+
+    // Handle game completion
+    if (complete) {
+      if (draw) {
+        showResultModal('Draw!', "It's a tie! Nobody wins this time.", true);
+      } else if (winner === AppState.playerId) {
+        showResultModal('Victory! 🎉', `You won the game!`, true);
+      } else {
+        showResultModal('Defeat', `${winnerName} won the game.`, true);
+      }
+    }
+  });
+}
 
 // Show waiting room
 function showWaitingRoom(lobby) {
@@ -152,72 +225,9 @@ function updatePublicLobbiesList(lobbies) {
   });
 }
 
-// Leave lobby button
-document.getElementById('leaveLobby').addEventListener('click', () => {
-  returnToHome();
-});
-
-// Handle game start
-AppState.socket.on('gameStart', (data) => {
-  AppState.currentLobby = data.lobby;
-  const { gameState, players } = data;
-
-  // Initialize the appropriate game
-  showScreen('gameScreen');
-
-  // Hide all game containers
-  document.querySelectorAll('.game-container').forEach(container => {
-    container.style.display = 'none';
+// Leave lobby button - setup in DOMContentLoaded
+function setupLeaveLobbyButton() {
+  document.getElementById('leaveLobby').addEventListener('click', () => {
+    returnToHome();
   });
-
-  // Show and initialize the correct game
-  const gameType = AppState.currentLobby.gameType;
-
-  switch (gameType) {
-    case 'rps':
-      initRPSGame(gameState, players);
-      break;
-    case 'tictactoe':
-      initTicTacToeGame(gameState, players);
-      break;
-    case 'connect4':
-      initConnect4Game(gameState, players);
-      break;
-    case 'checkers':
-      initCheckersGame(gameState, players);
-      break;
-  }
-});
-
-// Handle game update
-AppState.socket.on('gameUpdate', (data) => {
-  const { gameState, complete, winner, winnerName, draw, choices } = data;
-  const gameType = AppState.currentLobby.gameType;
-
-  // Update the game UI
-  switch (gameType) {
-    case 'rps':
-      updateRPSGame(gameState, choices);
-      break;
-    case 'tictactoe':
-      updateTicTacToeGame(gameState);
-      break;
-    case 'connect4':
-      updateConnect4Game(gameState);
-      break;
-    case 'checkers':
-      updateCheckersGame(gameState);
-      break;
-  }
-
-  // Handle game completion
-  if (complete) {
-    if (draw) {
-      showResultModal('Draw!', "It's a tie! Nobody wins this time.", true);
-    } else if (winner === AppState.playerId) {
-      showResultModal('Victory! 🎉', `You won the game!`, true);
-    } else {
-      showResultModal('Defeat', `${winnerName} won the game.`, true);
-    }
-  }
-});
+}
