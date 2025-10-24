@@ -76,6 +76,9 @@ function setupLobbyEventListeners() {
     const { gameState, complete, winner, winnerName, draw, choices } = data;
     const gameType = AppState.currentLobby.gameType;
 
+    // Update the lobby's game state
+    AppState.currentLobby.gameState = gameState;
+
     // Update the game UI
     switch (gameType) {
       case 'rps':

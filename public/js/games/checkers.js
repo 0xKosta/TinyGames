@@ -2,6 +2,20 @@
 
 let selectedPiece = null;
 
+// Helper to determine if board should be flipped
+function shouldFlipBoard() {
+  const playerIndex = AppState.currentLobby.players.findIndex(p => p.id === AppState.playerId);
+  return playerIndex === 1; // Flip for player 2
+}
+
+// Transform coordinates for flipped board
+function transformCoords(row, col) {
+  if (shouldFlipBoard()) {
+    return { row: 7 - row, col: 7 - col };
+  }
+  return { row, col };
+}
+
 function initCheckersGame(gameState, players) {
   const gameContainer = document.getElementById('checkersGame');
   gameContainer.style.display = 'block';
@@ -11,16 +25,24 @@ function initCheckersGame(gameState, players) {
 
   selectedPiece = null;
 
+  const isFlipped = shouldFlipBoard();
+
   // Create 8x8 board
-  for (let row = 0; row < 8; row++) {
-    for (let col = 0; col < 8; col++) {
+  for (let displayRow = 0; displayRow < 8; displayRow++) {
+    for (let displayCol = 0; displayCol < 8; displayCol++) {
       const cell = document.createElement('div');
       cell.className = 'checkers-cell';
-      cell.classList.add((row + col) % 2 === 0 ? 'light' : 'dark');
-      cell.dataset.row = row;
-      cell.dataset.col = col;
+      cell.classList.add((displayRow + displayCol) % 2 === 0 ? 'light' : 'dark');
 
-      cell.onclick = () => handleCheckersClick(row, col, gameState);
+      // Store the actual game coordinates
+      const actualCoords = isFlipped ?
+        { row: 7 - displayRow, col: 7 - displayCol } :
+        { row: displayRow, col: displayCol };
+
+      cell.dataset.row = actualCoords.row;
+      cell.dataset.col = actualCoords.col;
+
+      cell.onclick = () => handleCheckersClick(actualCoords.row, actualCoords.col);
 
       board.appendChild(cell);
     }
@@ -70,7 +92,10 @@ function updateCheckersGame(gameState) {
   }
 }
 
-function handleCheckersClick(row, col, gameState) {
+function handleCheckersClick(row, col) {
+  // Check current game state, not closure
+  const gameState = AppState.currentLobby.gameState;
+
   if (gameState.currentPlayer !== AppState.playerId) {
     return; // Not your turn
   }

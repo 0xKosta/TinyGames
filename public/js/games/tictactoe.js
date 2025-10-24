@@ -14,7 +14,9 @@ function initTicTacToeGame(gameState, players) {
     cell.dataset.position = i;
 
     cell.onclick = () => {
-      if (gameState.currentPlayer === AppState.playerId && !cell.classList.contains('filled')) {
+      // Check current game state, not closure
+      const currentGameState = AppState.currentLobby.gameState;
+      if (currentGameState.currentPlayer === AppState.playerId && !cell.classList.contains('filled')) {
         AppState.socket.emit('gameMove', {
           moveData: { position: i }
         });
