@@ -297,25 +297,52 @@ function checkInviteLink() {
   if (lobbyId && gameType) {
     console.log('Invite link detected:', { lobbyId, gameType });
 
-    // Set the game type
+    // Store invite info for after name is entered
+    AppState.pendingInvite = { lobbyId, gameType };
     AppState.currentGameType = gameType;
 
-    // Show a prompt for the player to enter their name
-    setTimeout(() => {
-      const playerName = document.getElementById('playerNameInput').value.trim();
+    // Show message to enter name
+    showError('Please enter your name to join the lobby!');
 
-      if (!playerName) {
-        showError('Please enter your name to join the lobby!');
-        document.getElementById('playerNameInput').focus();
+    // Highlight the name input
+    const nameInput = document.getElementById('playerNameInput');
+    nameInput.focus();
+    nameInput.style.borderColor = 'var(--primary-color)';
+    nameInput.placeholder = 'Enter your name to join...';
 
-        // Store invite info for after name is entered
-        AppState.pendingInvite = { lobbyId, gameType };
-      } else {
-        // Auto-join the lobby
-        joinLobbyFromInvite(lobbyId, playerName);
-      }
-    }, 500); // Wait a bit for socket to connect
+    // Show the join button
+    document.getElementById('joinFromInviteBtn').style.display = 'block';
+
+    // Clear URL parameters immediately to prevent accidental refreshes
+    window.history.replaceState({}, document.title, window.location.pathname);
   }
+}
+
+// Handle join from invite button click
+function handleJoinFromInvite() {
+  const playerName = document.getElementById('playerNameInput').value.trim();
+
+  if (!playerName) {
+    showError('Please enter your name first!');
+    document.getElementById('playerNameInput').focus();
+    return;
+  }
+
+  if (!AppState.pendingInvite) {
+    showError('No pending invite found!');
+    return;
+  }
+
+  const { lobbyId, gameType } = AppState.pendingInvite;
+
+  // Hide the join button
+  document.getElementById('joinFromInviteBtn').style.display = 'none';
+
+  // Join the lobby
+  joinLobbyFromInvite(lobbyId, playerName);
+
+  // Clear pending invite
+  AppState.pendingInvite = null;
 }
 
 // Join lobby from invite link
@@ -326,15 +353,19 @@ function joinLobbyFromInvite(lobbyId, playerName) {
     return;
   }
 
-  console.log('Auto-joining lobby from invite:', lobbyId);
+  console.log('Auto-joining lobby from invite:', lobbyId, 'as', playerName);
 
-  AppState.socket.emit('joinLobby', {
-    lobbyId: lobbyId,
-    playerName: playerName
-  });
+  // Register the player first
+  AppState.socket.emit('register', playerName);
+  AppState.playerName = playerName;
 
-  // Clear URL parameters
-  window.history.replaceState({}, document.title, window.location.pathname);
+  // Wait a moment for registration, then join
+  setTimeout(() => {
+    AppState.socket.emit('joinLobby', {
+      lobbyId: lobbyId,
+      playerName: playerName
+    });
+  }, 100);
 }
 
 // Initialize App
@@ -355,13 +386,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Check if there's a pending invite
       if (AppState.pendingInvite) {
-        const playerName = nameInput.value.trim();
-        if (playerName) {
-          joinLobbyFromInvite(AppState.pendingInvite.lobbyId, playerName);
-          AppState.pendingInvite = null;
-        }
+        handleJoinFromInvite();
       }
     }
+  });
+
+  // Setup join from invite button
+  document.getElementById('joinFromInviteBtn').addEventListener('click', () => {
+    handleJoinFromInvite();
   });
 
   // Auto-focus name input

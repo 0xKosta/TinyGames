@@ -5,7 +5,9 @@ let selectedPiece = null;
 // Helper to determine if board should be flipped
 function shouldFlipBoard() {
   const playerIndex = AppState.currentLobby.players.findIndex(p => p.id === AppState.playerId);
-  return playerIndex === 1; // Flip for player 2
+  // Player 1 (Black) is at rows 0-2 (top), needs flip to see pieces at bottom
+  // Player 2 (Red) is at rows 5-7 (bottom), doesn't need flip
+  return playerIndex === 0; // Flip for player 1 (Black)
 }
 
 // Transform coordinates for flipped board
