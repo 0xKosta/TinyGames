@@ -22,7 +22,9 @@ function initConnect4Game(gameState, players) {
       }
 
       cell.onclick = () => {
-        if (gameState.currentPlayer === AppState.playerId) {
+        // Check current game state, not closure
+        const currentGameState = AppState.currentLobby.gameState;
+        if (currentGameState.currentPlayer === AppState.playerId) {
           AppState.socket.emit('gameMove', {
             moveData: { column: col }
           });

@@ -195,10 +195,15 @@ io.on('connection', (socket) => {
       lobby.players.forEach(p => p.ready = false);
       lobby.gameState = null;
 
+      // Swap players for next game (switch colors/symbols)
+      if (lobby.players.length === 2) {
+        lobby.players.reverse();
+      }
+
       io.to(lobby.id).emit('lobbyUpdate', lobby);
       io.to(lobby.id).emit('rematchInitiated');
 
-      console.log(`Rematch initiated in lobby: ${lobby.id}`);
+      console.log(`Rematch initiated in lobby: ${lobby.id} - players swapped`);
     } catch (error) {
       socket.emit('error', { message: error.message });
     }
