@@ -13,7 +13,14 @@ function setupLobbyEventListeners() {
   AppState.socket.on('lobbyUpdate', (lobby) => {
     console.log('Lobby updated:', lobby);
     AppState.currentLobby = lobby;
-    updateWaitingRoom(lobby);
+
+    // If we're not on the waiting room screen yet, go there (for joiners)
+    const currentScreen = document.querySelector('.screen.active');
+    if (currentScreen && currentScreen.id !== 'waitingRoomScreen') {
+      showWaitingRoom(lobby);
+    } else {
+      updateWaitingRoom(lobby);
+    }
   });
 
   // Handle public lobbies update
@@ -87,12 +94,27 @@ function setupLobbyEventListeners() {
 
     // Handle game completion
     if (complete) {
+      let message = '';
+
+      // For RPS, show the choices
+      if (gameType === 'rps' && choices) {
+        const players = AppState.currentLobby.players;
+        const myChoice = choices[AppState.playerId];
+        const opponentId = players.find(p => p.id !== AppState.playerId)?.id;
+        const opponentChoice = choices[opponentId];
+        const opponentName = players.find(p => p.id !== AppState.playerId)?.name;
+
+        const icons = { rock: '✊', paper: '✋', scissors: '✌️' };
+
+        message = `You chose ${icons[myChoice]} ${myChoice}\n${opponentName} chose ${icons[opponentChoice]} ${opponentChoice}`;
+      }
+
       if (draw) {
-        showResultModal('Draw!', "It's a tie! Nobody wins this time.", true);
+        showResultModal('Draw!', message || "It's a tie! Nobody wins this time.", true);
       } else if (winner === AppState.playerId) {
-        showResultModal('Victory! 🎉', `You won the game!`, true);
+        showResultModal('Victory! 🎉', message || `You won the game!`, true);
       } else {
-        showResultModal('Defeat', `${winnerName} won the game.`, true);
+        showResultModal('Defeat', message || `${winnerName} won the game.`, true);
       }
     }
   });
@@ -102,6 +124,7 @@ function setupLobbyEventListeners() {
 function showWaitingRoom(lobby) {
   const lobbyIdEl = document.getElementById('lobbyIdDisplay');
   const lobbyGameEl = document.getElementById('lobbyGameDisplay');
+  const inviteLinkSection = document.getElementById('inviteLinkSection');
 
   lobbyIdEl.textContent = lobby.id;
 
@@ -113,6 +136,13 @@ function showWaitingRoom(lobby) {
   };
 
   lobbyGameEl.textContent = gameTitles[lobby.gameType];
+
+  // Show invite link section for private lobbies
+  if (lobby.isPrivate) {
+    inviteLinkSection.style.display = 'flex';
+  } else {
+    inviteLinkSection.style.display = 'none';
+  }
 
   updateWaitingRoom(lobby);
   showScreen('waitingRoomScreen');

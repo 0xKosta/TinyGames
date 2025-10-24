@@ -155,6 +155,18 @@ function setupLobbySelection() {
   document.getElementById('createPrivateLobby').addEventListener('click', () => {
     createLobby(true);
   });
+
+  // Join private lobby
+  document.getElementById('joinPrivateLobby').addEventListener('click', () => {
+    joinPrivateLobby();
+  });
+
+  // Allow Enter key to join private lobby
+  document.getElementById('privateLobbyIdInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      joinPrivateLobby();
+    }
+  });
 }
 
 // Create lobby function with validation
@@ -205,6 +217,40 @@ function setupResultModal() {
   });
 }
 
+// Join private lobby function
+function joinPrivateLobby() {
+  const playerName = document.getElementById('playerNameInput').value.trim();
+  const lobbyId = document.getElementById('privateLobbyIdInput').value.trim();
+
+  // Validation
+  if (!playerName) {
+    showError('Please enter your name first!');
+    document.getElementById('playerNameInput').focus();
+    return;
+  }
+
+  if (!lobbyId) {
+    showError('Please enter a lobby ID!');
+    document.getElementById('privateLobbyIdInput').focus();
+    return;
+  }
+
+  if (!AppState.socket || !AppState.socket.connected) {
+    showError('Not connected to server. Please refresh the page.');
+    return;
+  }
+
+  console.log('Joining private lobby:', lobbyId);
+
+  AppState.socket.emit('joinLobby', {
+    lobbyId: lobbyId,
+    playerName: playerName
+  });
+
+  // Clear the input
+  document.getElementById('privateLobbyIdInput').value = '';
+}
+
 // Copy Lobby ID
 function setupCopyLobbyId() {
   document.getElementById('copyLobbyId').addEventListener('click', () => {
@@ -213,6 +259,19 @@ function setupCopyLobbyId() {
       showError('Lobby ID copied to clipboard!');
     }).catch(() => {
       showError('Failed to copy lobby ID');
+    });
+  });
+
+  // Copy invite link
+  document.getElementById('copyInviteLink').addEventListener('click', () => {
+    const lobbyId = document.getElementById('lobbyIdDisplay').textContent;
+    const gameType = AppState.currentGameType;
+    const inviteLink = `${window.location.origin}?lobby=${lobbyId}&game=${gameType}`;
+
+    navigator.clipboard.writeText(inviteLink).then(() => {
+      showError('Invite link copied to clipboard!');
+    }).catch(() => {
+      showError('Failed to copy invite link');
     });
   });
 }
@@ -227,6 +286,55 @@ function getPlayerName(playerId) {
 // Utility: Is Current Player
 function isCurrentPlayer(playerId) {
   return playerId === AppState.playerId;
+}
+
+// Check for invite link in URL
+function checkInviteLink() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const lobbyId = urlParams.get('lobby');
+  const gameType = urlParams.get('game');
+
+  if (lobbyId && gameType) {
+    console.log('Invite link detected:', { lobbyId, gameType });
+
+    // Set the game type
+    AppState.currentGameType = gameType;
+
+    // Show a prompt for the player to enter their name
+    setTimeout(() => {
+      const playerName = document.getElementById('playerNameInput').value.trim();
+
+      if (!playerName) {
+        showError('Please enter your name to join the lobby!');
+        document.getElementById('playerNameInput').focus();
+
+        // Store invite info for after name is entered
+        AppState.pendingInvite = { lobbyId, gameType };
+      } else {
+        // Auto-join the lobby
+        joinLobbyFromInvite(lobbyId, playerName);
+      }
+    }, 500); // Wait a bit for socket to connect
+  }
+}
+
+// Join lobby from invite link
+function joinLobbyFromInvite(lobbyId, playerName) {
+  if (!AppState.socket || !AppState.socket.connected) {
+    showError('Connecting to server...');
+    setTimeout(() => joinLobbyFromInvite(lobbyId, playerName), 500);
+    return;
+  }
+
+  console.log('Auto-joining lobby from invite:', lobbyId);
+
+  AppState.socket.emit('joinLobby', {
+    lobbyId: lobbyId,
+    playerName: playerName
+  });
+
+  // Clear URL parameters
+  window.history.replaceState({}, document.title, window.location.pathname);
 }
 
 // Initialize App
@@ -244,9 +352,21 @@ document.addEventListener('DOMContentLoaded', () => {
   nameInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       nameInput.blur();
+
+      // Check if there's a pending invite
+      if (AppState.pendingInvite) {
+        const playerName = nameInput.value.trim();
+        if (playerName) {
+          joinLobbyFromInvite(AppState.pendingInvite.lobbyId, playerName);
+          AppState.pendingInvite = null;
+        }
+      }
     }
   });
 
   // Auto-focus name input
   nameInput.focus();
+
+  // Check for invite link in URL
+  checkInviteLink();
 });

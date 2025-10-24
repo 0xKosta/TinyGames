@@ -79,6 +79,14 @@
           </button>
         </div>
 
+        <div class="private-lobby-join-section">
+          <h3>Join Private Lobby</h3>
+          <div class="join-private-form">
+            <input type="text" id="privateLobbyIdInput" placeholder="Enter Lobby ID" maxlength="50" />
+            <button class="btn btn-primary" id="joinPrivateLobby">Join</button>
+          </div>
+        </div>
+
         <div class="public-lobbies-section">
           <h3>Available Public Lobbies</h3>
           <div id="publicLobbiesList" class="lobbies-list">
@@ -104,6 +112,10 @@
           <div class="info-item">
             <span class="label">Game:</span>
             <span id="lobbyGameDisplay" class="value"></span>
+          </div>
+          <div class="info-item" id="inviteLinkSection" style="display: none;">
+            <span class="label">Invite Link:</span>
+            <button id="copyInviteLink" class="btn btn-primary" style="margin-left: auto;">📎 Copy Invite Link</button>
           </div>
         </div>
 
