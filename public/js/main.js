@@ -11,32 +11,40 @@ const AppState = {
 
 // Initialize Socket Connection
 function initSocket() {
+  console.log('Initializing socket connection...');
   AppState.socket = io();
 
   // Connection events
   AppState.socket.on('connect', () => {
-    console.log('Connected to server');
+    console.log('✓ Connected to server with ID:', AppState.socket.id);
   });
 
   AppState.socket.on('disconnect', () => {
-    console.log('Disconnected from server');
+    console.log('✗ Disconnected from server');
     showError('Connection lost. Please refresh the page.');
+  });
+
+  AppState.socket.on('connect_error', (error) => {
+    console.error('Connection error:', error);
+    showError('Failed to connect to server. Please check if the server is running.');
   });
 
   // Registration
   AppState.socket.on('registered', (data) => {
     AppState.playerId = data.playerId;
     AppState.playerName = data.playerName;
-    console.log('Registered as:', data.playerName);
+    console.log('✓ Registered as:', data.playerName, 'with ID:', data.playerId);
   });
 
   // Error handling
   AppState.socket.on('error', (data) => {
+    console.error('Server error:', data.message);
     showError(data.message);
   });
 
   // Lobby closed
   AppState.socket.on('lobbyClosed', (data) => {
+    console.log('Lobby closed:', data.message);
     showError(data.message);
     returnToHome();
   });
@@ -140,25 +148,48 @@ function setupLobbySelection() {
 
   // Create public lobby
   document.getElementById('createPublicLobby').addEventListener('click', () => {
-    const playerName = document.getElementById('playerNameInput').value.trim();
-    AppState.socket.emit('createLobby', {
-      gameType: AppState.currentGameType,
-      isPrivate: false,
-      playerName
-    });
-    AppState.isHost = true;
+    createLobby(false);
   });
 
   // Create private lobby
   document.getElementById('createPrivateLobby').addEventListener('click', () => {
-    const playerName = document.getElementById('playerNameInput').value.trim();
-    AppState.socket.emit('createLobby', {
-      gameType: AppState.currentGameType,
-      isPrivate: true,
-      playerName
-    });
-    AppState.isHost = true;
+    createLobby(true);
   });
+}
+
+// Create lobby function with validation
+function createLobby(isPrivate) {
+  const playerName = document.getElementById('playerNameInput').value.trim();
+
+  // Validation
+  if (!playerName) {
+    showError('Please enter your name first!');
+    return;
+  }
+
+  if (!AppState.socket || !AppState.socket.connected) {
+    showError('Not connected to server. Please refresh the page.');
+    return;
+  }
+
+  if (!AppState.currentGameType) {
+    showError('Please select a game first!');
+    returnToHome();
+    return;
+  }
+
+  console.log('Creating lobby:', {
+    gameType: AppState.currentGameType,
+    isPrivate,
+    playerName
+  });
+
+  AppState.socket.emit('createLobby', {
+    gameType: AppState.currentGameType,
+    isPrivate: isPrivate,
+    playerName: playerName
+  });
+  AppState.isHost = true;
 }
 
 // Result Modal Handlers
@@ -205,6 +236,8 @@ document.addEventListener('DOMContentLoaded', () => {
   setupLobbySelection();
   setupResultModal();
   setupCopyLobbyId();
+  setupLobbyEventListeners(); // Setup lobby socket event listeners
+  setupLeaveLobbyButton(); // Setup leave lobby button
 
   // Set default name input behavior
   const nameInput = document.getElementById('playerNameInput');
